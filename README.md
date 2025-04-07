@@ -22,34 +22,36 @@ A comprehensive web-based attendance management system using facial recognition 
 
 1. Clone the repository
 
-git clone https://github.com/bansi81/face-recognition-attendance-system.git
-cd face-recognition-attendance-system
+   git clone https://github.com/bansi81/face-recognition-attendance-system.git
+   cd face-recognition-attendance-system
 
 
 2. Install dependencies
 
-pip install -r requirements.txt
+   pip install -r requirements.txt
 
 
 3. Set up environment variables
-Create a `.env` file in the root directory with the following:
+   
+   Create a `.env` file in the root directory with the following:
 
-DATABASE_URL=postgresql://username:root@localhost:5432/attendance_db
-SESSION_SECRET=your_secret_key
+   DATABASE_URL=postgresql://username:root@localhost:5432/attendance_db
+   SESSION_SECRET=your_secret_key
 
 
 4. Initialize the database
 
-python -c "from app import db; db.create_all()
+   python -c "from app import db; db.create_all()
 
 
 5. Run the application
 
-python main.py
+   python main.py
 
 
 6. Access the application
-Open your browser and navigate to `http://localhost:5000`
+   
+   Open your browser and navigate to `http://localhost:5000`
 
 ## Usage
 
