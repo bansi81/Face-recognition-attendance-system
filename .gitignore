@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+
+# Flask
+instance/
+.webassets-cache
+
+# Database files
+*.db
+*.sqlite3
+
+# Environment variables
+.env
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# Local configuration
+config.local.py
+
+# Temporary files
+*.tmp
+
+# Replit specific
+.replit
+replit.nix
+poetry.lock
+pyproject.toml
+.upm/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Face encodings and test images
+test_images/
+face_encodings/

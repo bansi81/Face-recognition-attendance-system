@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance System - Register{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-user-plus me-2"></i>Register</h3>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                <div class="alert alert-danger">
+                    {{ error }}
+                </div>
+                {% endif %}
+                <form method="POST" action="{{ url_for('register') }}" id="registrationForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <input type="text" id="username" name="username" class="form-control" required minlength="3">
+                        </div>
+                        <div class="form-text">Username must be at least 3 characters.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" id="email" name="email" class="form-control" required pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$">
+                        </div>
+                        <div class="form-text">Enter a valid email address (e.g., user@example.com).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" id="password" name="password" class="form-control" required minlength="8">
+                        </div>
+                        <div class="form-text">
+                            Password must:
+                            <ul class="mb-0 ps-3">
+                                <li>Be at least 8 characters long</li>
+                                <li>Contain at least one uppercase letter</li>
+                                <li>Contain at least one lowercase letter</li>
+                                <li>Contain at least one number</li>
+                                <li>Contain at least one special character</li>
+                            </ul>
+                        </div>
+                        <div id="passwordStrength" class="mt-2 progress" style="height: 5px;">
+                            <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="security_question" class="form-label">Security Question</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-shield-alt"></i></span>
+                            <select id="security_question" name="security_question" class="form-select" required>
+                                <option value="" selected disabled>Select a security question</option>
+                                <option value="birthdate">What is your birthdate?</option>
+                                <option value="pet">What was the name of your first pet?</option>
+                                <option value="city">What city were you born in?</option>
+                                <option value="school">What was the name of your first school?</option>
+                                <option value="hobby">What is your favorite hobby?</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="security_answer" class="form-label">Your Answer</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-key"></i></span>
+                            <input type="text" id="security_answer" name="security_answer" class="form-control" required minlength="2">
+                        </div>
+                        <div class="form-text">This will be used to recover your password if needed.</div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" id="registerButton">
+                            <i class="fas fa-user-plus me-2"></i>Register
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer">
+                <div class="text-center">
+                    Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordInput = document.getElementById('password');
+        const progressBar = document.querySelector('#passwordStrength .progress-bar');
+        const registerButton = document.getElementById('registerButton');
+        
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            
+            // Length check
+            if (password.length >= 8) strength += 20;
+            
+            // Uppercase check
+            if (/[A-Z]/.test(password)) strength += 20;
+            
+            // Lowercase check
+            if (/[a-z]/.test(password)) strength += 20;
+            
+            // Number check
+            if (/[0-9]/.test(password)) strength += 20;
+            
+            // Special character check
+            if (/[^A-Za-z0-9]/.test(password)) strength += 20;
+            
+            // Update progress bar
+            progressBar.style.width = strength + '%';
+            
+            // Change color based on strength
+            if (strength < 40) {
+                progressBar.className = 'progress-bar bg-danger';
+            } else if (strength < 80) {
+                progressBar.className = 'progress-bar bg-warning';
+            } else {
+                progressBar.className = 'progress-bar bg-success';
+            }
+        });
+        
+        // Client-side form validation
+        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            const password = passwordInput.value;
+            let isValid = true;
+            let errorMessage = '';
+            
+            // Validate password
+            if (password.length < 8) {
+                errorMessage = 'Password must be at least 8 characters long.';
+                isValid = false;
+            } else if (!/[A-Z]/.test(password)) {
+                errorMessage = 'Password must contain at least one uppercase letter.';
+                isValid = false;
+            } else if (!/[a-z]/.test(password)) {
+                errorMessage = 'Password must contain at least one lowercase letter.';
+                isValid = false;
+            } else if (!/[0-9]/.test(password)) {
+                errorMessage = 'Password must contain at least one number.';
+                isValid = false;
+            } else if (!/[^A-Za-z0-9]/.test(password)) {
+                errorMessage = 'Password must contain at least one special character.';
+                isValid = false;
+            }
+            
+            // If validation fails, prevent form submission
+            if (!isValid) {
+                event.preventDefault();
+                alert(errorMessage);
+            }
+        });
+    });
+</script>
+{% endblock %}

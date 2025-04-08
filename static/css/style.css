@@ -1,0 +1,104 @@
+/* Custom styles for Attendance System */
+
+/* Body and General Styles */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    flex: 1;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* Dashboard styles */
+.dashboard-card {
+    transition: transform 0.2s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+/* Webcam containers */
+#webcam-container {
+    position: relative;
+    margin: 0 auto;
+    max-width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#webcam {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Table styles */
+.table-responsive {
+    overflow-x: auto;
+    max-height: 60vh;
+}
+
+/* Form styles */
+.form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Active navigation link */
+.nav-tabs .nav-link.active {
+    font-weight: bold;
+}
+
+/* Card hover effect */
+.card {
+    transition: box-shadow 0.3s;
+}
+
+.card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Button hover styles */
+.btn {
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Loading spinner */
+.loading {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 0.25rem solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner 0.75s linear infinite;
+}
+
+@keyframes spinner {
+    100% {
+        transform: rotate(360deg);
+    }
+}

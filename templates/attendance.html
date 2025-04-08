@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance System - Take Attendance{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6 mb-4"><i class="fas fa-clipboard-check me-2"></i>Take Attendance</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Mark Attendance</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="course-select" class="form-label">Select Course</label>
+                    <select class="form-select" id="course-select">
+                        <option value="">-- Select a course --</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}">{{ course.name }} ({{ course.course_id }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="attendance-status" class="alert alert-info d-none">
+                    <i class="fas fa-info-circle me-2"></i><span id="status-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-info-circle me-2"></i>Instructions</h4>
+            </div>
+            <div class="card-body">
+                <ol class="mb-0">
+                    <li>Select a course from the dropdown menu.</li>
+                    <li>Each student must present themselves individually to the camera.</li>
+                    <li>Make sure there is good, consistent lighting on the face.</li>
+                    <li>Look directly at the camera with a neutral expression.</li>
+                    <li>Maintain the same appearance as during registration (glasses, etc.)</li>
+                    <li>Hold still while the system processes the face verification.</li>
+                </ol>
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Anti-Spoofing System:</strong> Our face recognition system uses advanced verification to prevent impersonation. Only the actual registered student will be recognized - the system is designed to reject any attempts at proxy attendance.
+                </div>
+                <div class="alert alert-danger mt-2">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    <strong>Security Notice:</strong> Attempting to mark attendance for another student is strictly prohibited and will be logged as a security incident. The system uses advanced facial matching technology that requires an exact biometric match to the registered student.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mt-4 mt-md-0">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-camera me-2"></i>Webcam</h4>
+            </div>
+            <div class="card-body text-center">
+                <div id="webcam-container" class="mb-3">
+                    <video id="webcam" class="img-fluid" autoplay playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                </div>
+                <div class="d-grid gap-2">
+                    <button id="btn-capture" class="btn btn-primary" disabled>
+                        <i class="fas fa-camera me-2"></i>Capture Attendance
+                    </button>
+                    <button id="btn-restart" class="btn btn-secondary d-none">
+                        <i class="fas fa-redo me-2"></i>Restart Camera
+                    </button>
+                </div>
+                <div class="mt-3 small text-muted text-start">
+                    <p><i class="fas fa-lightbulb me-2"></i><strong>Tips for best results:</strong></p>
+                    <ul class="small">
+                        <li>Position your face so it fills the camera frame properly</li>
+                        <li>Make sure your face is evenly lit without shadows</li>
+                        <li>Avoid wearing different accessories than when you registered</li>
+                        <li>If verification fails, try adjusting your position and lighting</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/webcam.js') }}"></script>
+<script>
+    $(document).ready(function() {
+        const webcamElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('canvas');
+        const webcamContainer = document.getElementById('webcam-container');
+        const captureButton = document.getElementById('btn-capture');
+        const restartButton = document.getElementById('btn-restart');
+        const courseSelect = document.getElementById('course-select');
+        const statusDiv = document.getElementById('attendance-status');
+        const statusMessage = document.getElementById('status-message');
+        
+        let webcam = null;
+        let processingAttendance = false;
+        
+        function startCamera() {
+            // Initialize webcam
+            webcam = new Webcam(webcamElement, 'user', canvasElement);
+            
+            webcam.start()
+                .then(result => {
+                    restartButton.classList.add('d-none');
+                    console.log("Webcam started");
+                })
+                .catch(err => {
+                    console.error(err);
+                    statusDiv.classList.remove('d-none', 'alert-info', 'alert-success', 'alert-warning');
+                    statusDiv.classList.add('alert-danger');
+                    statusMessage.textContent = 'Error accessing webcam. Please ensure you have given permission.';
+                    restartButton.classList.remove('d-none');
+                });
+        }
+        
+        startCamera();
+        
+        courseSelect.addEventListener('change', function() {
+            captureButton.disabled = !this.value;
+            if (this.value) {
+                statusDiv.classList.add('d-none');
+            }
+        });
+        
+        captureButton.addEventListener('click', function() {
+            if (!webcam) {
+                alert('Camera not initialized!');
+                return;
+            }
+            
+            if (processingAttendance) {
+                return; // Prevent multiple submissions
+            }
+            
+            const courseId = courseSelect.value;
+            if (!courseId) {
+                alert('Please select a course first!');
+                return;
+            }
+            
+            // Capture image
+            const imageData = webcam.snap();
+            
+            // Show loading message
+            processingAttendance = true;
+            captureButton.disabled = true;
+            statusDiv.classList.remove('d-none', 'alert-danger', 'alert-success', 'alert-warning');
+            statusDiv.classList.add('alert-info');
+            statusMessage.textContent = 'Processing attendance and verifying identity...';
+            
+            // Send to server
+            $.ajax({
+                url: '/mark_attendance',
+                type: 'POST',
+                data: {
+                    course_id: courseId,
+                    image_data: imageData
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        statusDiv.classList.remove('alert-info', 'alert-danger', 'alert-warning');
+                        statusDiv.classList.add('alert-success');
+                    } else if (response.status === 'info') {
+                        statusDiv.classList.remove('alert-info', 'alert-danger', 'alert-success');
+                        statusDiv.classList.add('alert-warning');
+                    } else {
+                        statusDiv.classList.remove('alert-info', 'alert-success', 'alert-warning');
+                        statusDiv.classList.add('alert-danger');
+                    }
+                    statusMessage.textContent = response.message;
+                    captureButton.disabled = false;
+                    processingAttendance = false;
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                    statusDiv.classList.remove('alert-info', 'alert-success', 'alert-warning');
+                    statusDiv.classList.add('alert-danger');
+                    statusMessage.textContent = xhr.responseJSON?.message || 'An error occurred while verifying identity. Please try again with better lighting and positioning.';
+                    captureButton.disabled = false;
+                    processingAttendance = false;
+                }
+            });
+        });
+        
+        restartButton.addEventListener('click', function() {
+            if (webcam) {
+                webcam.stop();
+                webcam = null;
+            }
+            startCamera();
+        });
+        
+        // Stop the webcam when navigating away from the page
+        window.addEventListener('beforeunload', function() {
+            if (webcam) {
+                webcam.stop();
+            }
+        });
+    });
+</script>
+{% endblock %}

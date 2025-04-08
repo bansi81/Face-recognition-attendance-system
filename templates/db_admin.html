@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}Database Administration{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">
+        <i class="fas fa-database me-2"></i>Database Administration
+    </h1>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Database Connection Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <tbody>
+                            <tr>
+                                <th scope="row" width="30%">Database Type</th>
+                                <td>{{ db_info.type }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Host</th>
+                                <td>{{ db_info.host }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Port</th>
+                                <td>{{ db_info.port }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Database</th>
+                                <td>{{ db_info.database }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">User</th>
+                                <td>{{ db_info.user }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Database Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-primary bg-opacity-10">
+                                <div class="card-body text-center">
+                                    <h2 class="display-4">{{ db_info.tables.users }}</h2>
+                                    <p class="mb-0">Users</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-success bg-opacity-10">
+                                <div class="card-body text-center">
+                                    <h2 class="display-4">{{ db_info.tables.students }}</h2>
+                                    <p class="mb-0">Students</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-warning bg-opacity-10">
+                                <div class="card-body text-center">
+                                    <h2 class="display-4">{{ db_info.tables.courses }}</h2>
+                                    <p class="mb-0">Courses</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-info bg-opacity-10">
+                                <div class="card-body text-center">
+                                    <h2 class="display-4">{{ db_info.tables.attendances }}</h2>
+                                    <p class="mb-0">Attendance Records</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Access Database with pgAdmin</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">
+                        You can connect to the PostgreSQL database using pgAdmin, a powerful management tool for PostgreSQL.
+                        Follow these instructions to connect:
+                    </p>
+                    <ol class="list-group list-group-numbered mb-4">
+                        {% for instruction in pgadmin_instructions %}
+                        <li class="list-group-item">{{ instruction }}</li>
+                        {% endfor %}
+                    </ol>
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i> For security reasons, the database password is not displayed here.
+                        The password is stored in environment variables.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Database Schema Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="schemaAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="usersHeading">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#usersCollapse" aria-expanded="true" aria-controls="usersCollapse">
+                                    <i class="fas fa-users me-2"></i> Users Table
+                                </button>
+                            </h2>
+                            <div id="usersCollapse" class="accordion-collapse collapse show" aria-labelledby="usersHeading" data-bs-parent="#schemaAccordion">
+                                <div class="accordion-body">
+                                    <table class="table table-bordered table-striped">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Column</th>
+                                                <th>Type</th>
+                                                <th>Constraints</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>id</td>
+                                                <td>Integer</td>
+                                                <td>Primary Key, Auto Increment</td>
+                                            </tr>
+                                            <tr>
+                                                <td>username</td>
+                                                <td>String(64)</td>
+                                                <td>Unique, Not Null</td>
+                                            </tr>
+                                            <tr>
+                                                <td>email</td>
+                                                <td>String(120)</td>
+                                                <td>Unique, Not Null</td>
+                                            </tr>
+                                            <tr>
+                                                <td>password_hash</td>
+                                                <td>String(256)</td>
+                                                <td>Not Null</td>
+                                            </tr>
+                                            <tr>
+                                                <td>created_at</td>
+                                                <td>DateTime</td>
+                                                <td>Default: Current Time</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="studentsHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#studentsCollapse" aria-expanded="false" aria-controls="studentsCollapse">
+                                    <i class="fas fa-user-graduate me-2"></i> Students Table
+                                </button>
+                            </h2>
+                            <div id="studentsCollapse" class="accordion-collapse collapse" aria-labelledby="studentsHeading" data-bs-parent="#schemaAccordion">
+                                <div class="accordion-body">
+                                    <table class="table table-bordered table-striped">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Column</th>
+                                                <th>Type</th>
+                                                <th>Constraints</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>id</td>
+                                                <td>Integer</td>
+                                                <td>Primary Key, Auto Increment</td>
+                                            </tr>
+                                            <tr>
+                                                <td>name</td>
+                                                <td>String(100)</td>
+                                                <td>Not Null</td>
+                                            </tr>
+                                            <tr>
+                                                <td>student_id</td>
+                                                <td>String(20)</td>
+                                                <td>Unique, Not Null</td>
+                                            </tr>
+                                            <tr>
+                                                <td>course_id</td>
+                                                <td>Integer</td>
+                                                <td>Foreign Key (courses.id), Nullable</td>
+                                            </tr>
+                                            <tr>
+                                                <td>face_encoding</td>
+                                                <td>Text</td>
+                                                <td>Nullable</td>
+                                            </tr>
+                                            <tr>
+                                                <td>created_at</td>
+                                                <td>DateTime</td>
+                                                <td>Default: Current Time</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="coursesHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#coursesCollapse" aria-expanded="false" aria-controls="coursesCollapse">
+                                    <i class="fas fa-book me-2"></i> Courses Table
+                                </button>
+                            </h2>
+                            <div id="coursesCollapse" class="accordion-collapse collapse" aria-labelledby="coursesHeading" data-bs-parent="#schemaAccordion">
+                                <div class="accordion-body">
+                                    <table class="table table-bordered table-striped">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Column</th>
+                                                <th>Type</th>
+                                                <th>Constraints</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>id</td>
+                                                <td>Integer</td>
+                                                <td>Primary Key, Auto Increment</td>
+                                            </tr>
+                                            <tr>
+                                                <td>name</td>
+                                                <td>String(100)</td>
+                                                <td>Not Null</td>
+                                            </tr>
+                                            <tr>
+                                                <td>course_id</td>
+                                                <td>String(20)</td>
+                                                <td>Unique, Not Null</td>
+                                            </tr>
+                                            <tr>
+                                                <td>created_at</td>
+                                                <td>DateTime</td>
+                                                <td>Default: Current Time</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="attendancesHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#attendancesCollapse" aria-expanded="false" aria-controls="attendancesCollapse">
+                                    <i class="fas fa-clipboard-check me-2"></i> Attendances Table
+                                </button>
+                            </h2>
+                            <div id="attendancesCollapse" class="accordion-collapse collapse" aria-labelledby="attendancesHeading" data-bs-parent="#schemaAccordion">
+                                <div class="accordion-body">
+                                    <table class="table table-bordered table-striped">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th>Column</th>
+                                                <th>Type</th>
+                                                <th>Constraints</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>id</td>
+                                                <td>Integer</td>
+                                                <td>Primary Key, Auto Increment</td>
+                                            </tr>
+                                            <tr>
+                                                <td>student_id</td>
+                                                <td>Integer</td>
+                                                <td>Foreign Key (students.id), Not Null, Cascade Delete</td>
+                                            </tr>
+                                            <tr>
+                                                <td>course_id</td>
+                                                <td>Integer</td>
+                                                <td>Foreign Key (courses.id), Not Null, Cascade Delete</td>
+                                            </tr>
+                                            <tr>
+                                                <td>timestamp</td>
+                                                <td>DateTime</td>
+                                                <td>Default: Current Time</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="mt-3">
+                                        <h6 class="fw-bold">Indexes:</h6>
+                                        <ul>
+                                            <li>idx_attendance_date - Index on timestamp</li>
+                                            <li>idx_student_course - Composite index on student_id, course_id</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

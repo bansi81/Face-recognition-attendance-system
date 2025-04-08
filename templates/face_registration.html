@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance System - Face Registration{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6 mb-4"><i class="fas fa-id-card me-2"></i>Face Registration</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-user-check me-2"></i>Register Student Face</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="student-select" class="form-label">Select Student</label>
+                    <select class="form-select" id="student-select">
+                        <option value="">-- Select a student --</option>
+                        {% for student in students %}
+                        <option value="{{ student.id }}" data-has-face="{{ 'true' if student.face_encoding else 'false' }}">
+                            {{ student.name }} ({{ student.student_id }}) 
+                            {% if student.face_encoding %}[Face Registered]{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="registration-status" class="alert alert-info d-none">
+                    <i class="fas fa-info-circle me-2"></i><span id="status-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-info-circle me-2"></i>Registration Guidelines</h4>
+            </div>
+            <div class="card-body">
+                <h5>For Best Results:</h5>
+                <ol class="mb-0">
+                    <li>Ensure the face is centered in the frame</li>
+                    <li>Make sure there is good, even lighting on the face</li>
+                    <li>Face the camera directly, with a neutral expression</li>
+                    <li>Remove glasses, hats, or other items that cover facial features</li>
+                    <li>Stay still during the capture process</li>
+                    <li>Only one person should be in the frame</li>
+                    <li>Maintain a neutral background</li>
+                </ol>
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Important:</strong> The system uses a strict matching algorithm for security. The attendance recognition will only work if the student's face appears very similar to this registration photo. Register in the same conditions (lighting, position) as where attendance will be taken.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mt-4 mt-md-0">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-camera me-2"></i>Webcam</h4>
+            </div>
+            <div class="card-body text-center">
+                <div id="webcam-container" class="mb-3">
+                    <video id="webcam" class="img-fluid" autoplay playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                </div>
+                <div class="d-grid gap-2">
+                    <button id="btn-capture" class="btn btn-primary" disabled>
+                        <i class="fas fa-camera me-2"></i>Capture and Register
+                    </button>
+                    <button id="btn-restart" class="btn btn-secondary d-none">
+                        <i class="fas fa-redo me-2"></i>Restart Camera
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/webcam.js') }}"></script>
+<script>
+    $(document).ready(function() {
+        const webcamElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('canvas');
+        const webcamContainer = document.getElementById('webcam-container');
+        const captureButton = document.getElementById('btn-capture');
+        const restartButton = document.getElementById('btn-restart');
+        const studentSelect = document.getElementById('student-select');
+        const statusDiv = document.getElementById('registration-status');
+        const statusMessage = document.getElementById('status-message');
+        
+        let webcam = null;
+        
+        function startCamera() {
+            // Initialize webcam
+            webcam = new Webcam(webcamElement, 'user', canvasElement);
+            
+            webcam.start()
+                .then(result => {
+                    restartButton.classList.add('d-none');
+                    console.log("Webcam started");
+                })
+                .catch(err => {
+                    console.error(err);
+                    statusDiv.classList.remove('d-none', 'alert-info', 'alert-success');
+                    statusDiv.classList.add('alert-danger');
+                    statusMessage.textContent = 'Error accessing webcam. Please ensure you have given permission.';
+                    restartButton.classList.remove('d-none');
+                });
+        }
+        
+        startCamera();
+        
+        studentSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const hasRegisteredFace = selectedOption.getAttribute('data-has-face') === 'true';
+            
+            captureButton.disabled = !this.value;
+            
+            if (this.value) {
+                if (hasRegisteredFace) {
+                    statusDiv.classList.remove('d-none', 'alert-danger', 'alert-success');
+                    statusDiv.classList.add('alert-warning');
+                    statusMessage.textContent = 'This student already has a registered face. Re-registering will overwrite the existing data.';
+                } else {
+                    statusDiv.classList.add('d-none');
+                }
+            } else {
+                statusDiv.classList.add('d-none');
+            }
+        });
+        
+        captureButton.addEventListener('click', function() {
+            if (!webcam) {
+                alert('Camera not initialized!');
+                return;
+            }
+            
+            const studentId = studentSelect.value;
+            if (!studentId) {
+                alert('Please select a student first!');
+                return;
+            }
+            
+            // Show confirmation if overwriting
+            const selectedOption = studentSelect.options[studentSelect.selectedIndex];
+            const hasRegisteredFace = selectedOption.getAttribute('data-has-face') === 'true';
+            
+            if (hasRegisteredFace) {
+                if (!confirm('This will overwrite the existing face registration. Continue?')) {
+                    return;
+                }
+            }
+            
+            // Capture image
+            const imageData = webcam.snap();
+            
+            // Show loading message
+            captureButton.disabled = true;
+            statusDiv.classList.remove('d-none', 'alert-danger', 'alert-success', 'alert-warning');
+            statusDiv.classList.add('alert-info');
+            statusMessage.textContent = 'Processing face registration...';
+            
+            // Send to server
+            $.ajax({
+                url: '/register_face',
+                type: 'POST',
+                data: {
+                    student_id: studentId,
+                    image_data: imageData
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        statusDiv.classList.remove('alert-info', 'alert-danger', 'alert-warning');
+                        statusDiv.classList.add('alert-success');
+                        statusMessage.textContent = response.message;
+                        
+                        // Update the option to show face is registered
+                        selectedOption.setAttribute('data-has-face', 'true');
+                        selectedOption.text = selectedOption.text.replace(' [Face Registered]', '') + ' [Face Registered]';
+                    } else {
+                        statusDiv.classList.remove('alert-info', 'alert-success', 'alert-warning');
+                        statusDiv.classList.add('alert-danger');
+                        statusMessage.textContent = response.message;
+                    }
+                    captureButton.disabled = false;
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                    statusDiv.classList.remove('alert-info', 'alert-success', 'alert-warning');
+                    statusDiv.classList.add('alert-danger');
+                    statusMessage.textContent = xhr.responseJSON?.message || 'An error occurred during face registration.';
+                    captureButton.disabled = false;
+                }
+            });
+        });
+        
+        restartButton.addEventListener('click', function() {
+            if (webcam) {
+                webcam.stop();
+                webcam = null;
+            }
+            startCamera();
+        });
+        
+        // Stop the webcam when navigating away from the page
+        window.addEventListener('beforeunload', function() {
+            if (webcam) {
+                webcam.stop();
+            }
+        });
+    });
+</script>
+{% endblock %}

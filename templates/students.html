@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance System - Students & Courses{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if not active_tab %}active{% endif %}" id="students-tab" data-bs-toggle="tab" data-bs-target="#students-tab-pane" type="button" role="tab" aria-controls="students-tab-pane" aria-selected="{% if not active_tab %}true{% else %}false{% endif %}">
+                <i class="fas fa-user-graduate me-2"></i>Students
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'courses' %}active{% endif %}" id="courses-tab" data-bs-toggle="tab" data-bs-target="#courses-tab-pane" type="button" role="tab" aria-controls="courses-tab-pane" aria-selected="{% if active_tab == 'courses' %}true{% else %}false{% endif %}">
+                <i class="fas fa-book me-2"></i>Courses
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="myTabContent">
+        <!-- Students Tab -->
+        <div class="tab-pane fade {% if not active_tab %}show active{% endif %}" id="students-tab-pane" role="tabpanel" aria-labelledby="students-tab" tabindex="0">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Add New Student</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if error %}
+                            <div class="alert alert-danger">{{ error }}</div>
+                            {% endif %}
+                            
+                            <form method="POST" action="{{ url_for('students') }}">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="student_id" class="form-label">Student ID</label>
+                                    <input type="text" class="form-control" id="student_id" name="student_id" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="course_ids" class="form-label">Courses</label>
+                                    <select class="form-select" id="course_ids" name="course_ids" multiple size="5">
+                                        {% for course in courses %}
+                                        <option value="{{ course.id }}">{{ course.name }} ({{ course.course_id }})</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Hold Ctrl (or Cmd on Mac) to select multiple courses</div>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Add Student
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-users me-2"></i>Registered Students</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Name</th>
+                                            <th>Student ID</th>
+                                            <th>Courses</th>
+                                            <th>Face Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if students %}
+                                            {% for student in students %}
+                                            <tr>
+                                                <td>{{ student.id }}</td>
+                                                <td>{{ student.name }}</td>
+                                                <td>{{ student.student_id }}</td>
+                                                <td>
+                                                    {% if student.courses %}
+                                                        {% for course in student.courses %}
+                                                            <span class="badge bg-info">{{ course.name }}</span>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">No courses</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if student.face_encoding %}
+                                                    <span class="badge bg-success">Registered</span>
+                                                    {% else %}
+                                                    <span class="badge bg-warning">Not Registered</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{{ url_for('edit_student', id=student.id) }}" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <form method="POST" action="{{ url_for('delete_student', id=student.id) }}" onsubmit="return confirm('Are you sure you want to delete this student?');" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="6" class="text-center">No students registered yet.</td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Courses Tab -->
+        <div class="tab-pane fade {% if active_tab == 'courses' %}show active{% endif %}" id="courses-tab-pane" role="tabpanel" aria-labelledby="courses-tab" tabindex="0">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Add New Course</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('courses') }}">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Course Name</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="course_id" class="form-label">Course ID</label>
+                                    <input type="text" class="form-control" id="course_id" name="course_id" required>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Add Course
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-book me-2"></i>Available Courses</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Course Name</th>
+                                            <th>Course ID</th>
+                                            <th>Students</th>
+                                            <th>Created</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if courses %}
+                                            {% for course in courses %}
+                                            <tr>
+                                                <td>{{ course.id }}</td>
+                                                <td>{{ course.name }}</td>
+                                                <td>{{ course.course_id }}</td>
+                                                <td>{{ course.students.count() }}</td>
+                                                <td>{{ course.created_at.strftime('%Y-%m-%d') }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="5" class="text-center">No courses available yet.</td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Activate the correct tab based on URL hash
+    $(document).ready(function() {
+        // If there's a hash in the URL, activate the corresponding tab
+        if (window.location.hash) {
+            const hash = window.location.hash;
+            if (hash === '#courses') {
+                const coursesTab = document.getElementById('courses-tab');
+                if (coursesTab) {
+                    coursesTab.click();
+                }
+            }
+        }
+        
+        // Update URL hash when tab changes
+        $('.nav-tabs button').on('shown.bs.tab', function (e) {
+            if (e.target.id === 'courses-tab') {
+                history.pushState(null, null, '#courses');
+            } else {
+                history.pushState(null, null, '#students');
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance System - Reports{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6 mb-4"><i class="fas fa-chart-bar me-2"></i>Attendance Reports</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Options</h4>
+            </div>
+            <div class="card-body">
+                <form id="filter-form">
+                    <div class="mb-3">
+                        <label for="course-filter" class="form-label">Course</label>
+                        <select class="form-select" id="course-filter" name="course_id">
+                            <option value="all">All Courses</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.name }} ({{ course.course_id }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="student-filter" class="form-label">Student</label>
+                        <select class="form-select" id="student-filter" name="student_id">
+                            <option value="all">All Students</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}">{{ student.name }} ({{ student.student_id }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date-from" class="form-label">Date From</label>
+                        <input type="date" class="form-control" id="date-from" name="date_from">
+                    </div>
+                    <div class="mb-3">
+                        <label for="date-to" class="form-label">Date To</label>
+                        <input type="date" class="form-control" id="date-to" name="date_to">
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>Generate Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="fas fa-download me-2"></i>Export</h4>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button id="btn-export-csv" class="btn btn-outline-info" disabled>
+                        <i class="fas fa-file-csv me-2"></i>Export as CSV
+                    </button>
+                    <button id="btn-print" class="btn btn-outline-dark" disabled>
+                        <i class="fas fa-print me-2"></i>Print Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8 mt-4 mt-md-0">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-table me-2"></i>Attendance Records
+                    <span id="record-count" class="badge bg-light text-dark float-end">0</span>
+                </h4>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="attendance-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Course</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-data">
+                            <tr>
+                                <td colspan="4" class="text-center">No data available. Please generate a report.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        const filterForm = document.getElementById('filter-form');
+        const attendanceData = document.getElementById('attendance-data');
+        const recordCount = document.getElementById('record-count');
+        const exportCsvBtn = document.getElementById('btn-export-csv');
+        const printBtn = document.getElementById('btn-print');
+        
+        let reportData = [];
+        
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(filterForm);
+            const params = new URLSearchParams();
+            
+            for (const [key, value] of formData.entries()) {
+                if (value) {
+                    params.append(key, value);
+                }
+            }
+            
+            // Show loading message
+            attendanceData.innerHTML = '<tr><td colspan="4" class="text-center">Loading data...</td></tr>';
+            
+            // Send request
+            fetch('/get_attendance_data?' + params.toString())
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        reportData = result.data;
+                        updateTable(reportData);
+                        
+                        // Enable export buttons
+                        exportCsvBtn.disabled = false;
+                        printBtn.disabled = false;
+                    } else {
+                        attendanceData.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${result.message}</td></tr>`;
+                        recordCount.textContent = '0';
+                        
+                        // Disable export buttons
+                        exportCsvBtn.disabled = true;
+                        printBtn.disabled = true;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    attendanceData.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error fetching data. Please try again.</td></tr>';
+                    recordCount.textContent = '0';
+                    
+                    // Disable export buttons
+                    exportCsvBtn.disabled = true;
+                    printBtn.disabled = true;
+                });
+        });
+        
+        function updateTable(data) {
+    if (!data || data.length === 0) {
+        attendanceData.innerHTML = '<tr><td colspan="4" class="text-center">No records found matching the criteria.</td></tr>';
+        recordCount.textContent = '0';
+        return;
+    }
+    
+    // Update table
+    let html = '';
+    data.forEach(item => {
+        // Use the pre-formatted date and time from the server if available
+        const date = item.date || (item.timestamp ? new Date(item.timestamp).toLocaleDateString() : "");
+        const time = item.time || (item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : "");
+        
+        html += `
+        <tr>
+            <td>${item.student_name}</td>
+            <td>${item.course_name}</td>
+            <td>${date}</td>
+            <td>${time}</td>
+        </tr>
+        `;
+    });
+    
+    attendanceData.innerHTML = html;
+    recordCount.textContent = data.length;
+}
+        
+        exportCsvBtn.addEventListener('click', function() {
+            if (!reportData || reportData.length === 0) {
+                alert('No data to export!');
+                return;
+            }
+            
+            // Convert to CSV
+            const headers = ['Student', 'Course', 'Date', 'Time'];
+            
+            let csvContent = headers.join(',') + '\n';
+            
+            reportData.forEach(item => {
+    // Use the pre-formatted date and time from the server if available
+    const date = item.date || (item.timestamp ? new Date(item.timestamp).toLocaleDateString() : "");
+    const time = item.time || (item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : "");
+    
+    const row = [
+        `"${item.student_name}"`,
+        `"${item.course_name}"`,
+        `"${date}"`,
+        `"${time}"`
+    ];
+    
+    csvContent += row.join(',') + '\n';
+});
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'attendance_report.csv';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        });
+        
+        printBtn.addEventListener('click', function() {
+            if (!reportData || reportData.length === 0) {
+                alert('No data to print!');
+                return;
+            }
+            
+            // Open a new window for printing
+            const printWindow = window.open('', '_blank');
+            
+            // Get current filter values
+            const course = document.getElementById('course-filter').options[document.getElementById('course-filter').selectedIndex].text;
+            const student = document.getElementById('student-filter').options[document.getElementById('student-filter').selectedIndex].text;
+            const dateFrom = document.getElementById('date-from').value;
+            const dateTo = document.getElementById('date-to').value;
+            
+            // Write the print document
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Attendance Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1 { text-align: center; margin-bottom: 10px; }
+                        .report-info { margin-bottom: 20px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+                        th { background-color: #f2f2f2; }
+                        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #777; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Attendance Report</h1>
+                    <div class="report-info">
+                        <p><strong>Course:</strong> ${course}</p>
+                        <p><strong>Student:</strong> ${student}</p>
+                        <p><strong>Date Range:</strong> ${dateFrom || 'All'} to ${dateTo || 'All'}</p>
+                        <p><strong>Total Records:</strong> ${reportData.length}</p>
+                        <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Course</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `);
+            
+            reportData.forEach(item => {
+                const timestamp = new Date(item.timestamp);
+                const date = timestamp.toLocaleDateString();
+                const time = timestamp.toLocaleTimeString();
+                
+                printWindow.document.write(`
+                    <tr>
+                        <td>${item.student_name}</td>
+                        <td>${item.course_name}</td>
+                        <td>${date}</td>
+                        <td>${time}</td>
+                    </tr>
+                `);
+            });
+            
+            printWindow.document.write(`
+                        </tbody>
+                    </table>
+                    <div class="footer">
+                        <p>Attendance Management System with Facial Recognition</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            
+            // Wait for images and resources to load before printing
+            printWindow.onload = function() {
+                printWindow.print();
+                // printWindow.close(); // Uncomment to close after printing
+            };
+        });
+        
+        // Set default dates (current month)
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        document.getElementById('date-from').valueAsDate = firstDay;
+        document.getElementById('date-to').valueAsDate = today;
+    });
+</script>
+{% endblock %}
